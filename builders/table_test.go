@@ -52,7 +52,7 @@ func TestNewCreateTable(t *testing.T) {
 		panic(err)
 	}
 
-	data, err := tbl.Query(func(builder *query[users]) {
+	data, err := tbl.Query(func(builder Q) {
 		builder.Where("first_name", "=", "Ali")
 	}).FindOne()
 	if err != nil {

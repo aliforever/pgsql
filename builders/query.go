@@ -12,6 +12,10 @@ type scanner interface {
 	Scan(dest ...any) error
 }
 
+type Q interface {
+	Where(fieldName, operand string, value interface{}) *whereClause
+}
+
 type query[T tbl] struct {
 	db        *sql.DB
 	tableName string
@@ -24,7 +28,7 @@ type query[T tbl] struct {
 	values []interface{}
 }
 
-func newQuery[T tbl](db *sql.DB, fn func(builder *query[T])) *query[T] {
+func newQuery[T tbl](db *sql.DB, fn func(builder Q)) *query[T] {
 	var t T
 	q := &query[T]{builder: &strings.Builder{}, placeHolderIndex: 0, db: db, tableName: t.TableName()}
 
