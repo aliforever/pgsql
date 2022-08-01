@@ -6,7 +6,7 @@ import (
 	"sync"
 )
 
-type queryBuilder struct {
+type query[T tbl] struct {
 	builder *strings.Builder
 
 	placeHolderIndex      int
@@ -15,11 +15,11 @@ type queryBuilder struct {
 	values []interface{}
 }
 
-func newWhereV2() *queryBuilder {
-	return &queryBuilder{builder: &strings.Builder{}, placeHolderIndex: 0}
+func newQueryBuilderV2[T tbl]() *query[T] {
+	return &query[T]{builder: &strings.Builder{}, placeHolderIndex: 0}
 }
 
-func (w *queryBuilder) newPlaceHolder() int {
+func (w *query[T]) newPlaceHolder() int {
 	w.placeHolderIndexMutex.Lock()
 	defer w.placeHolderIndexMutex.Unlock()
 
@@ -28,19 +28,19 @@ func (w *queryBuilder) newPlaceHolder() int {
 	return w.placeHolderIndex
 }
 
-func (w *queryBuilder) Where(fieldName, operand string, value interface{}) *whereClause {
+func (w *query[T]) Where(fieldName, operand string, value interface{}) *whereClause[T] {
 	w.values = append(w.values, value)
-	return newWhereClause(w, fieldName, operand, value)
+	return newWhereClause[T](w, fieldName, operand, value)
 }
 
-func (w *queryBuilder) GroupBy(column string) *queryBuilder {
+func (w *query[T]) GroupBy(column string) *query[T] {
 	w.builder.WriteString(fmt.Sprintf(" GROUP BY %s", column))
 
 	return w
 }
 
 // OrderBy TODO: ASC/DESC per field
-func (w *queryBuilder) OrderBy(column string) *queryBuilder {
+func (w *query[T]) OrderBy(column string) *query[T] {
 	w.builder.WriteString(fmt.Sprintf(" GROUP BY %s", column))
 
 	return w

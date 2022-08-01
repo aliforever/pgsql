@@ -1,29 +1,33 @@
 package builders
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type whereClause struct {
-	builder *queryBuilder
-
-	field   string
-	operand string
-	val     interface{}
+	builder       *strings.Builder
+	placeHolderFn func() int
+	addValueFn    func(interface{})
+	field         string
+	operand       string
+	val           interface{}
 }
 
-func newWhereClause(builder *queryBuilder, field, operand string, val interface{}) *whereClause {
-	_, _ = builder.builder.WriteString(fmt.Sprintf("%s %s $%d", field, operand, builder.newPlaceHolder()))
-	return &whereClause{builder: builder, field: field, operand: operand, val: val}
+func newWhereClause(builder *strings.Builder, placeHolderFn func() int, addValueFn func(val interface{}), field, operand string, val interface{}) *whereClause {
+	_, _ = builder.WriteString(fmt.Sprintf("%s %s $%d", field, operand, placeHolderFn()))
+	return &whereClause{builder: builder, field: field, operand: operand, val: val, addValueFn: addValueFn}
 }
 
 func (w *whereClause) And(field, operand string, val interface{}) *whereClause {
-	_, _ = w.builder.builder.WriteString(fmt.Sprintf(" AND %s %s $%d", field, operand, w.builder.newPlaceHolder()))
-	w.builder.values = append(w.builder.values, val)
+	_, _ = w.builder.WriteString(fmt.Sprintf(" AND %s %s $%d", field, operand, w.placeHolderFn()))
+	w.addValueFn(val)
 	return w
 }
 
 func (w *whereClause) Or(field, operand string, val interface{}) *whereClause {
-	_, _ = w.builder.builder.WriteString(fmt.Sprintf(" OR %s %s $%d", field, operand, w.builder.newPlaceHolder()))
-	w.builder.values = append(w.builder.values, val)
+	_, _ = w.builder.WriteString(fmt.Sprintf(" OR %s %s $%d", field, operand, w.placeHolderFn()))
+	w.addValueFn(val)
 	return w
 }
 
@@ -38,15 +42,15 @@ func (w *whereClause) AndGroup(field, operand string, val interface{}, fn func(q
 }
 
 func (w *whereClause) group(keyword, field, operand string, val interface{}, fn func(qb *whereClause)) *whereClause {
-	w.builder.builder.WriteString(fmt.Sprintf(" %s (", keyword))
+	w.builder.WriteString(fmt.Sprintf(" %s (", keyword))
 
-	wc := newWhereClause(w.builder, field, operand, val)
+	wc := newWhereClause(w.builder, w.placeHolderFn, w.addValueFn, field, operand, val)
 
 	fn(wc)
 
-	wc.builder.builder.WriteString(")")
+	wc.builder.WriteString(")")
 
-	w.builder.values = append(w.builder.values, val)
+	w.addValueFn(val)
 
 	return w
 }

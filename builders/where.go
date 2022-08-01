@@ -27,12 +27,6 @@ func newWhere(key string, operand string, value interface{}, isOr bool, placeHol
 	}
 }
 
-func newQueryBuilder(fn func(builder *queryBuilder)) *queryBuilder {
-	qb := newWhereV2()
-	fn(qb)
-	return qb
-}
-
 func (w *where) where(key string, operand string, value interface{}, isOr, isGroup bool) *where {
 	nw := &where{
 		key:              key,

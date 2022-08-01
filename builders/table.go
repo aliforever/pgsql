@@ -47,8 +47,8 @@ func (c *table[T]) Insert(data T, opts ...*options.Insert) error {
 	return err
 }
 
-func (c *table[T]) Query() *query[T] {
-	return newQuery[T](c.db, c.name)
+func (c *table[T]) Query(fn func(builder *query[T])) *query[T] {
+	return newQuery[T](c.db, fn)
 }
 
 func (c *table[T]) DropTable() (err error) {
